@@ -1,10 +1,10 @@
 # magic-candle-1-reverse-eng
-Reverse engineering of the old DOS game 'The Magic Candle 1' (1989)
+Reverse engineering of the old DOS game 'The Magic Candle' (1989)
 ===============================================================
 
 https://en.wikipedia.org/wiki/Magic_Candle
 
-The Magic Candle is an old RPG videogame from 1989 with 2 sequels (hence the '1', added for clarification).
+The Magic Candle (1) is an old RPG videogame from 1989 with 2 sequels (hence the '1', added for clarification).
 
 Game screenshots:
 
