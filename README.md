@@ -6,11 +6,9 @@ https://en.wikipedia.org/wiki/Magic_Candle
 
 The Magic Candle is an old RPG videogame from 1989 with 2 sequels (hence the '1', added for clarification).
 
-Game screenshot:
+Game screenshots:
 
 ![Castle map example](https://github.com/lglearn/magic-candle-1-reverse-eng/blob/master/mc1_map_castle.png "Castle screenshot")
-
-Game screenshot:
 
 ![Outside map example](https://github.com/lglearn/magic-candle-1-reverse-eng/blob/master/mc1_map_outside.png "Map screenshot")
 
