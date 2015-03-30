@@ -39,6 +39,9 @@ The decoding of the tiles basically works (see 'tiles_decoding' in the repositor
 
 The TILE format is detailled in the Python decoder.
 
+Here is a -concatenated- example of the tiles extracted from the file EGA18.TIL:
+![Tiles example](https://raw.githubusercontent.com/lglearn/magic-candle-1-reverse-eng/master/tiles_decoding/EGA18.TIL__extracted_tiles.png)
+
 Map decoder
 -----------
 
