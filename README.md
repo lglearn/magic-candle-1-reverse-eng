@@ -1,4 +1,3 @@
-# magic-candle-1-reverse-eng
 Reverse engineering of the old DOS game 'The Magic Candle' (1989)
 ===============================================================
 
