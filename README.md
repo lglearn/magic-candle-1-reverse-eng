@@ -35,6 +35,21 @@ I first wrote a decoder, then started analysing the impact of each byte change o
 
 After hundreds of tries, I've managed to discover the signification of most of the interesting stats hidden in the file (see 'savefile_decoding' in the repository).
 
+The Save-file editor
+--------------------
+
+A command-line editor that allows you to modify a save-file by specifing the offset and value(s) (see 'savefile_modify' in the repository). 
+
+You can change any byte by giving a new value (in decimal), the encoding is of course automatic. The changes can be displayed on the console (--color-dump & --dump options). A backup is automatically created (except if you specify a name for the new file).
+
+The editor can use files containing lists of offset/values via STDIN (--stdin option), or in the command itself (-m option).
+
+You can even print the result in a CSV-friendly format (--csv-friendly option) for analysis in a spreadsheet for instance.
+
+See the documentation of the script (in the comments, or launch it without arguments).
+
+Feel free to change names, stats, inventory, gold, etc. But be careful, some changes can have unintended consequences.
+
 Tiles decoder
 -------------
 
