@@ -42,6 +42,9 @@ A command-line editor that allows you to modify a save-file by specifing the off
 
 You can change any byte by giving a new value (in decimal), the encoding is of course automatic. The changes can be displayed on the console (--color-dump & --dump options). A backup is automatically created (except if you specify a name for the new file).
 
+Editing some bytes (displayed in blue):
+![Save-file editor](https://github.com/lglearn/magic-candle-1-reverse-eng/blob/master/savefile_modify/modify_savefile_screenshot.png "Save-file editor screenshot")
+
 The editor can use files containing lists of offset/values via STDIN (--stdin option), or in the command itself (-m option).
 
 You can even print the result in a CSV-friendly format (--csv-friendly option) for analysis in a spreadsheet for instance.
