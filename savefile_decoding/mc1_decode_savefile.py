@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-import sys
 from mmap import ACCESS_READ, mmap
 import operator
+import argparse
 
 """
 This script will decode a Magic Candle 1 save file.
@@ -42,63 +42,97 @@ real_value = 76 (in decimal)
 real_value = 'L', which is the letter L in uppercase (76th character in an ASCII table)
 """
 
+
+def dcode(byte_offset, byte_value):
+    """
+    Decode (or encode, the method is the same) the byte value located at the offset.
+    The offset is the byte number of the byte to decode/encode, starting from the beginning of the save-file.
+    '0xA5' is a magic number used by the game for the operation.
+    '& 0xFF' is used to keep only the byte value (prevents overflows)
+    :param byte_offset: offset of the byte that we are encoding/decoding (starting from the beginning of the file)
+    :param byte_value: encoding/decoding the byte located at the position 'offset' in the save-file
+    """
+    return operator.xor((byte_offset + 0xA5), byte_value) & 0xFF
+
+
+parser = argparse.ArgumentParser(description='View the decoded save-file.')
+parser.add_argument('savefile', nargs='?', help='Name of the savefile (xxxxx.MCS)')
+parser.add_argument('--csv-friendly', action='store_true',
+                    help='Print the modified content of the save-file, with a "tab" separator')
+args = parser.parse_args()
+
+BLOCK_SIZE = 6  # When displaying the save-file, print BLOCK_SIZE cols/line. (6 because there are 6 heroes in the game)
+
 offset = 0  # Keep track of the current offset, starting from the beginning of the file
-block = 0  # Counter used to separate the values in blocks of 6
-group_encoded_hexa = ''  # Store encoded hexadecimal values
-group_decoded_hexa = ''  # Store decoded hexadecimal values
-group_decoded_decimal = ''  # Store decoded decimal values
-group_chars = ''  # Store decoded values as characters (most won't make sense)
 
-# [optional] the file is not always aligned in blocks of 6, 'pad' can be used to inject a new line to make reading the file easier.
-# An underscore '_' char will be substituted as a padding character.
-# This makes the final result look more regular (as well as easier to parse and document)
-# Format: the offset where we want to add a newline and the number of padding characters to insert (from 1 to 5 max).
-pad = {0x1f1: 1, 0x270: 5, 0x3a4: 4}
+# The separators used when printing the save-file. They must change if the file is used as a CSV file
+SEP_GROUPS = '\t'
+SEP_COLS = ' '
+SEP_CHARS = ''
 
-filename = sys.argv[1]
+# Output is a CSV file: we use tabs as separators, they are the only safe choice.
+# ',' or ';' cannot be used, they may appear in the 'chars' column, which would
+# break the import from the CSV. While Tabs cannot appear in the output.
+if args.csv_friendly:
+    # SEP_GROUPS = '\t'
+    SEP_COLS = '\t'
 
+filename = args.savefile
 with open(filename, 'rb') as f, mmap(f.fileno(), 0, access=ACCESS_READ) as mm:
-    for byte in mm:  # Length is equal to the current file size
+    SAVEFILE_LENGTH = len(mm)
 
-        # Add artificial padding & newline at the Offsets defined in 'pad'
-        if offset in pad:
-            block += pad[offset]
-            for i in range(pad[offset]):
-                group_encoded_hexa = '	'.join((group_encoded_hexa, "{0:>4}".format("_")))
-                group_decoded_hexa = '	'.join((group_decoded_hexa, "{0:>4}".format("_")))
-                group_decoded_decimal = '	'.join((group_decoded_decimal, "{0:>3}".format("_")))
-                group_chars += "_"
+    curr_offset = 0  # Keep track of the current offset, starting from the beginning of the file
+    block = 0  # Counter used to separate the values in blocks of size 'BLOCK_SIZE'
+    line_offset = 0  # Offset of the first byte in a row (printed in the first column)
 
-        val = operator.xor((offset + 0xA5), byte[0])  # => the decoding
+    # The blocks to be displayed in the row. These arrays are initialized so that we don't need to bother tracking which
+    # must be padded with '_' characters when the number of displayed bytes is < BLOCK_SIZE.
+    # This will considerably simplify the Padding (see 'pad' below).
+    group_encoded_hexa = ["   _"] * BLOCK_SIZE  # Store encoded hexadecimal values
+    group_decoded_hexa = ["   _"] * BLOCK_SIZE  # Store decoded hexadecimal values
+    group_decoded_decimal = ["  _"] * BLOCK_SIZE  # Store decoded decimal values
+    group_chars = [""] * BLOCK_SIZE  # Store decoded values as characters (most won't make sense)
 
-        # Print & newline when 6 chars have been parsed
-        if (block % 6 == 0) and (block > 0):
+    # [optional] the file is not always aligned in blocks of 'BLOCK_SIZE', 'pad' can be used to inject a new line to make reading the file easier.
+    # An underscore '_' char will be substituted as a padding character.
+    # This makes the final result look more regular (as well as easier to parse and document)
+    # Note that the pads below do not necessary make sense, on my test safe-file they look good, but it
+    # is possible that some fields thought to be unused or related, have in fact another meaning...
+    # Content: the offsets that we want to start on a newline.
+    pad = {0x1cc, 0x1f1, 0x22c, 0x26f, 0x3a3, 0x430, 0x479}
 
-            # The line_offset is the first displayed field. It must take into account the possible padding characters
-            # (they must be ignored).
-            if offset in pad:
-                line_offset = hex(offset - 6 + pad[offset])
-            else:
-                line_offset = hex(offset - 6)
+    for byte_mm in mm:
+        byte = byte_mm[0]
+        val = dcode(curr_offset, byte)  # => the decoding
 
-            out = "{0:6}	{1}	{2}	{3} {4}".format(line_offset, group_encoded_hexa, group_decoded_hexa, group_decoded_decimal, group_chars)
-            print(out)
-            group_encoded_hexa = ''
-            group_decoded_hexa = ''
-            group_decoded_decimal = ''
-            group_chars = ''
-
-        # Concat the current block results
-        group_encoded_hexa = '	'.join((group_encoded_hexa, "{0:#04x}".format(byte[0])))
-        group_decoded_hexa = '	'.join((group_decoded_hexa, "{0:#04x}".format(val & 0xFF)))
-        group_decoded_decimal = '	'.join((group_decoded_decimal, "{0:>3}".format(val & 0xFF)))
-
-        curr_c = "{0:c}".format(val & 0xFF)
+        curr_c = "{0:c}".format(val)
         if not str(
                 curr_c).isprintable():  # protection against special chars that create problems on the screen (beep, etc.)
             curr_c = "."
-        group_chars = group_chars + curr_c
 
-        offset += 1
-        block += 1
+        group_encoded_hexa[block] = "{0:#04x}".format(byte)
+        group_decoded_hexa[block] = "{0:#04x}".format(val)
+        group_decoded_decimal[block] = "{0:>3}".format(val)
+        group_chars[block] = curr_c
+
+        # Print & newline when BLOCK_SIZE chars have been parsed or a PADDING/newline byte is reached or the end of file is reached
+        if ((block % (BLOCK_SIZE - 1) == 0) and (block > 0)) or (curr_offset in pad) or (
+                    curr_offset >= SAVEFILE_LENGTH - 1):
+            line_offset = "{0:#05x}".format(line_offset)
+
+            out_format = SEP_GROUPS.join(["{0:6}", "{1}", "{2}", "{3}", "{4}"])
+            out = out_format.format(line_offset, SEP_COLS.join(group_encoded_hexa),
+                                    SEP_COLS.join(group_decoded_hexa), SEP_COLS.join(group_decoded_decimal),
+                                    SEP_CHARS.join(group_chars))
+            print(out)
+            group_encoded_hexa = ["   _"] * BLOCK_SIZE
+            group_decoded_hexa = ["   _"] * BLOCK_SIZE
+            group_decoded_decimal = ["  _"] * BLOCK_SIZE
+            group_chars = [""] * BLOCK_SIZE
+            block = 0
+            line_offset = curr_offset + 1  # '+1' because this is the offset of the _next_ byte
+        else:
+            block += 1
+
+        curr_offset += 1
 
