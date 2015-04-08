@@ -96,7 +96,7 @@ with open(filename, 'rb') as f, mmap(f.fileno(), 0, access=ACCESS_READ) as mm:
     # [optional] the file is not always aligned in blocks of 'BLOCK_SIZE', 'pad' can be used to inject a new line to make reading the file easier.
     # An underscore '_' char will be substituted as a padding character.
     # This makes the final result look more regular (as well as easier to parse and document)
-    # Note that the pads below do not necessary make sense, on my test safe-file they look good, but it
+    # Note that the pads below do not necessary make sense, on my test save-file they look good, but it
     # is possible that some fields thought to be unused or related, have in fact another meaning...
     # Content: the offsets that we want to start on a newline.
     pad = {0x1cc, 0x1f1, 0x22c, 0x26f, 0x3a3, 0x430, 0x479}
@@ -106,8 +106,7 @@ with open(filename, 'rb') as f, mmap(f.fileno(), 0, access=ACCESS_READ) as mm:
         val = dcode(curr_offset, byte)  # => the decoding
 
         curr_c = "{0:c}".format(val)
-        if not str(
-                curr_c).isprintable():  # protection against special chars that create problems on the screen (beep, etc.)
+        if not str(curr_c).isprintable():  # protection against special chars that create problems on the screen (beep, etc.)
             curr_c = "."
 
         group_encoded_hexa[block] = "{0:#04x}".format(byte)
